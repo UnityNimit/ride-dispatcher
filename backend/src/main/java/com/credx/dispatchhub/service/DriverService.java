@@ -8,6 +8,7 @@ import com.credx.dispatchhub.entity.DriverProfile;
 import com.credx.dispatchhub.enums.DriverStatus;
 import com.credx.dispatchhub.exception.ResourceNotFoundException;
 import com.credx.dispatchhub.repository.DriverProfileRepository;
+import com.credx.dispatchhub.util.GeoUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,13 +30,8 @@ public class DriverService {
     @Transactional(readOnly = true)
     public Page<DriverProfileResponse> listDrivers(DriverStatus status, Pageable pageable) {
         Page<DriverProfile> page = (status != null)
-                ? driverProfileRepository.findByStatus(status, pageable)
-                : driverProfileRepository.findAll(pageable);
-
-        // Each call to driver.getUser() below lazily triggers its own SELECT
-        // since DriverProfile.user is FetchType.LAZY and the page query above
-        // doesn't join it - fine at seed-data scale, not fine with a real
-        // driver roster.
+                ? driverProfileRepository.findByStatusWithUser(status, pageable)
+                : driverProfileRepository.findAllWithUser(pageable);
         return page.map(this::toResponse);
     }
 
@@ -99,7 +95,9 @@ public class DriverService {
             throw new IllegalArgumentException("radiusKm must be positive");
         }
 
-        List<Long> orderedIds = driverProfileRepository.findNearbyAvailableDriverIds(lat, lng, radiusKm)
+        GeoUtils.BoundingBox box = GeoUtils.boundingBox(lat, lng, radiusKm);
+        List<Long> orderedIds = driverProfileRepository.findNearbyAvailableDriverIds(
+                        lat, lng, radiusKm, box.minLat(), box.maxLat(), box.minLng(), box.maxLng())
                 .stream()
                 .map(Number::longValue)
                 .toList();

@@ -6,21 +6,41 @@ import com.credx.dispatchhub.enums.TripStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 public interface TripRepository extends JpaRepository<Trip, Long> {
 
-    // NOTE: this does not eagerly join rider/driver, so anything that iterates
-    // the page and touches trip.getRider()/trip.getDriver() will trigger a
-    // separate SELECT per row (see TripService#toResponseList).
-    Page<Trip> findAll(Pageable pageable);
+    @EntityGraph(attributePaths = {"rider", "driver", "driver.user"})
+    @Query("select t from Trip t")
+    Page<Trip> findAllWithAssociations(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"rider", "driver", "driver.user"})
+    @Query("select t from Trip t where t.status = :status")
+    Page<Trip> findByStatusWithAssociations(@Param("status") TripStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"rider", "driver", "driver.user"})
+    @Query("select t from Trip t where t.rider.id = :riderId")
+    Page<Trip> findByRiderIdWithAssociations(@Param("riderId") Long riderId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"rider", "driver", "driver.user"})
+    @Query("select t from Trip t where t.rider.id = :riderId and t.status = :status")
+    Page<Trip> findByRiderIdAndStatusWithAssociations(
+            @Param("riderId") Long riderId,
+            @Param("status") TripStatus status,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = {"rider", "driver", "driver.user"})
+    @Query("select t from Trip t where t.driver.id = :driverId")
+    Page<Trip> findByDriverIdWithAssociations(@Param("driverId") Long driverId, Pageable pageable);
 
     Page<Trip> findByStatus(TripStatus status, Pageable pageable);
 
@@ -42,6 +62,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     long countByStatusAndRequestedAtBetween(TripStatus status, Instant from, Instant to);
 
     long countByRequestedAtBetween(Instant from, Instant to);
+
+    long countByStatusIn(Collection<TripStatus> statuses);
 
     List<Trip> findByStatusIn(List<TripStatus> statuses);
 
@@ -67,6 +89,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
             WHERE t.status = 'REQUESTED'
               AND t.pickup_lat IS NOT NULL
               AND t.pickup_lng IS NOT NULL
+              AND t.pickup_lat BETWEEN :minLat AND :maxLat
+              AND t.pickup_lng BETWEEN :minLng AND :maxLng
               AND (6371 * acos(
                     LEAST(1.0, GREATEST(-1.0,
                       cos(radians(:lat)) * cos(radians(t.pickup_lat))
@@ -86,7 +110,11 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     List<Number> findNearbyRequestedTripIds(
             @Param("lat") double lat,
             @Param("lng") double lng,
-            @Param("radiusKm") double radiusKm);
+            @Param("radiusKm") double radiusKm,
+            @Param("minLat") double minLat,
+            @Param("maxLat") double maxLat,
+            @Param("minLng") double minLng,
+            @Param("maxLng") double maxLng);
 
     @Query("""
             select distinct t from Trip t

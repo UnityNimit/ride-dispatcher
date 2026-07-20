@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS driver_profiles (
 );
 
 CREATE INDEX IF NOT EXISTS idx_driver_profiles_status ON driver_profiles (status);
+CREATE INDEX IF NOT EXISTS idx_driver_profiles_status_geo ON driver_profiles (status, current_lat, current_lng);
 
 -- =========================================================================
 -- rider_profiles
@@ -95,6 +96,7 @@ CREATE INDEX IF NOT EXISTS idx_trips_status ON trips (status);
 CREATE INDEX IF NOT EXISTS idx_trips_rider_id ON trips (rider_id);
 CREATE INDEX IF NOT EXISTS idx_trips_driver_id ON trips (driver_id);
 CREATE INDEX IF NOT EXISTS idx_trips_requested_at ON trips (requested_at);
+CREATE INDEX IF NOT EXISTS idx_trips_status_pickup_geo ON trips (status, pickup_lat, pickup_lng);
 
 -- =========================================================================
 -- trip_status_history

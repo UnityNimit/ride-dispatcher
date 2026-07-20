@@ -19,6 +19,7 @@ import com.credx.dispatchhub.exception.ResourceNotFoundException;
 import com.credx.dispatchhub.repository.DriverProfileRepository;
 import com.credx.dispatchhub.repository.TripRepository;
 import com.credx.dispatchhub.repository.UserRepository;
+import com.credx.dispatchhub.util.GeoUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,9 +42,12 @@ public class TripService {
     private final DriverProfileRepository driverProfileRepository;
     private final UserRepository userRepository;
     private final FareEstimationService fareEstimationService;
+    private final TripRequestRateLimiter tripRequestRateLimiter;
 
     @Transactional
     public TripResponse requestTrip(Long riderId, TripRequest request) {
+        tripRequestRateLimiter.checkOrThrow(riderId);
+
         User rider = userRepository.findById(riderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Rider not found"));
 
@@ -83,28 +87,22 @@ public class TripService {
     @Transactional(readOnly = true)
     public Page<TripResponse> listTrips(TripStatus status, Pageable pageable) {
         Page<Trip> page = (status != null)
-                ? tripRepository.findByStatus(status, pageable)
-                : tripRepository.findAll(pageable);
-
-        // page.map() iterates each row and calls toResponse(), which touches
-        // trip.getRider() and trip.getDriver() - both FetchType.LAZY - so a
-        // "page" of 20 trips means up to 41 additional SELECTs (1 for rider +
-        // 1 for driver's user, per row) on top of the initial page query.
-        // Enable SHOW_SQL to see it.
+                ? tripRepository.findByStatusWithAssociations(status, pageable)
+                : tripRepository.findAllWithAssociations(pageable);
         return page.map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<TripResponse> listTripsForRider(Long riderId, TripStatus status, Pageable pageable) {
         Page<Trip> page = (status != null)
-                ? tripRepository.findByRiderIdAndStatus(riderId, status, pageable)
-                : tripRepository.findByRiderId(riderId, pageable);
+                ? tripRepository.findByRiderIdAndStatusWithAssociations(riderId, status, pageable)
+                : tripRepository.findByRiderIdWithAssociations(riderId, pageable);
         return page.map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
     public Page<TripResponse> listTripsForDriver(Long driverProfileId, Pageable pageable) {
-        return tripRepository.findByDriverId(driverProfileId, pageable).map(this::toResponse);
+        return tripRepository.findByDriverIdWithAssociations(driverProfileId, pageable).map(this::toResponse);
     }
 
     /**
@@ -129,7 +127,11 @@ public class TripService {
             throw new IllegalArgumentException("radiusKm must be positive");
         }
 
-        List<Long> orderedIds = tripRepository.findNearbyRequestedTripIds(lat, lng, radiusKm).stream()
+        GeoUtils.BoundingBox box = GeoUtils.boundingBox(lat, lng, radiusKm);
+
+        List<Long> orderedIds = tripRepository.findNearbyRequestedTripIds(
+                        lat, lng, radiusKm, box.minLat(), box.maxLat(), box.minLng(), box.maxLng())
+                .stream()
                 .map(Number::longValue)
                 .toList();
         if (orderedIds.isEmpty()) {

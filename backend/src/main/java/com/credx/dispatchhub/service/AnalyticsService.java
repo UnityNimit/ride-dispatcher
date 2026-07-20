@@ -32,9 +32,9 @@ public class AnalyticsService {
         long totalTripsToday = tripRepository.countByRequestedAtBetween(startOfDay, endOfDay);
         long completedToday = tripRepository.countByStatusAndRequestedAtBetween(TripStatus.COMPLETED, startOfDay, endOfDay);
         long cancelledToday = tripRepository.countByStatusAndRequestedAtBetween(TripStatus.CANCELLED, startOfDay, endOfDay);
-        long inProgress = tripRepository.findByStatusIn(List.of(TripStatus.IN_PROGRESS, TripStatus.ARRIVED)).size();
-        long activeDrivers = driverProfileRepository.findByStatus(DriverStatus.AVAILABLE).size()
-                + driverProfileRepository.findByStatus(DriverStatus.ON_TRIP).size();
+        long inProgress = tripRepository.countByStatusIn(List.of(TripStatus.IN_PROGRESS, TripStatus.ARRIVED));
+        long activeDrivers = driverProfileRepository.countByStatus(DriverStatus.AVAILABLE)
+                + driverProfileRepository.countByStatus(DriverStatus.ON_TRIP);
 
         return DashboardStatsResponse.builder()
                 .totalTripsToday(totalTripsToday)
