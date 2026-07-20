@@ -22,6 +22,11 @@
       <mat-icon>wifi_off</mat-icon>
       <p>Go online (AVAILABLE) to accept trip requests.</p>
     </mat-card>
+  } @else if (!hasLocation()) {
+    <mat-card class="dh-empty-state">
+      <mat-icon>location_off</mat-icon>
+      <p>Update your location so we can show nearby trip requests.</p>
+    </mat-card>
   } @else if (loading()) {
     <div class="dh-loading-state">
       <mat-spinner diameter="40"></mat-spinner>
@@ -30,7 +35,7 @@
   } @else if (requests().length === 0) {
     <mat-card class="dh-empty-state">
       <mat-icon>notifications_active</mat-icon>
-      <p>No open trip requests right now. This page refreshes automatically.</p>
+      <p>No open trip requests nearby. This page refreshes automatically.</p>
     </mat-card>
   } @else {
     <div class="request-list">

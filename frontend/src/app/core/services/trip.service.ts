@@ -42,6 +42,14 @@ export class TripService {
     return this.http.get<PageResponse<Trip>>(`${this.baseUrl}/my`, { params });
   }
 
+  findNearbyTrips(lat: number, lng: number, radiusKm = 10): Observable<Trip[]> {
+    const params = new HttpParams()
+      .set('lat', lat)
+      .set('lng', lng)
+      .set('radiusKm', radiusKm);
+    return this.http.get<Trip[]>(`${this.baseUrl}/nearby`, { params });
+  }
+
   getTripById(id: number): Observable<Trip> {
     return this.http.get<Trip>(`${this.baseUrl}/${id}`);
   }

@@ -12,19 +12,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TripService } from '../../../core/services/trip.service';
 import { DriverService } from '../../../core/services/driver.service';
 import { Trip } from '../../../core/models/trip.model';
-import { PageResponse } from '../../../core/models/page.model';
 import { DriverProfile, DriverStatus } from '../../../core/models/driver.model';
 import { formatTripTimestamp } from '../../../core/utils/date-format.util';
 import { environment } from '../../../../environments/environment';
-
-const EMPTY_PAGE: PageResponse<Trip> = {
-  content: [],
-  page: 0,
-  size: 20,
-  totalElements: 0,
-  totalPages: 0,
-  last: true
-};
 
 @Component({
   selector: 'app-incoming-request',
@@ -50,12 +40,10 @@ export class IncomingRequestComponent implements OnInit {
   readonly requests = signal<Trip[]>([]);
   readonly formatTimestamp = formatTripTimestamp;
 
-  constructor(
-    private tripService: TripService,
-    private driverService: DriverService,
-    private router: Router,
-    private snackBar: MatSnackBar
-  ) {}
+  private readonly tripService = inject(TripService);
+  private readonly driverService = inject(DriverService);
+  private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
 
   ngOnInit(): void {
     this.driverService.getMyDriverProfile().subscribe({
@@ -66,14 +54,19 @@ export class IncomingRequestComponent implements OnInit {
     interval(environment.pollingIntervalMs)
       .pipe(
         startWith(0),
-        switchMap(() =>
-          this.tripService.listTrips(0, 20, 'REQUESTED').pipe(catchError(() => of(EMPTY_PAGE)))
-        ),
+        switchMap(() => {
+          const lat = this.driver()?.currentLat;
+          const lng = this.driver()?.currentLng;
+          if (lat == null || lng == null) {
+            return of([] as Trip[]);
+          }
+          return this.tripService.findNearbyTrips(lat, lng, 10).pipe(catchError(() => of([] as Trip[])));
+        }),
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe({
-        next: (page) => {
-          this.requests.set(page.content);
+        next: (trips) => {
+          this.requests.set(trips);
           this.loading.set(false);
         },
         error: () => this.loading.set(false)
@@ -111,5 +104,10 @@ export class IncomingRequestComponent implements OnInit {
 
   isAvailable(): boolean {
     return this.driver()?.status === 'AVAILABLE';
+  }
+
+  hasLocation(): boolean {
+    const d = this.driver();
+    return d?.currentLat != null && d?.currentLng != null;
   }
 }

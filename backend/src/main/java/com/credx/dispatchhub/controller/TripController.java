@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/trips")
 @RequiredArgsConstructor
@@ -70,6 +72,15 @@ public class TripController {
             @PathVariable Long driverProfileId,
             @PageableDefault(size = 20, sort = "requestedAt") Pageable pageable) {
         return ResponseEntity.ok(PageResponse.of(tripService.listTripsForDriver(driverProfileId, pageable)));
+    }
+
+    @GetMapping("/nearby")
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<List<TripResponse>> findNearbyRequestedTrips(
+            @RequestParam double lat,
+            @RequestParam double lng,
+            @RequestParam(defaultValue = "10") double radiusKm) {
+        return ResponseEntity.ok(tripService.findNearbyRequestedTrips(lat, lng, radiusKm));
     }
 
     // Any authenticated user (rider, driver, admin) can fetch a trip by id -

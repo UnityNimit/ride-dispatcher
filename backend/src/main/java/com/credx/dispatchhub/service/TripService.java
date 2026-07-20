@@ -27,7 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -114,6 +118,35 @@ public class TripService {
         Trip trip = tripRepository.findByIdWithRiderAndDriver(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
         return toResponse(trip);
+    }
+
+    /**
+     * Open REQUESTED trips near a point, nearest pickup first — filtered in SQL.
+     */
+    @Transactional(readOnly = true)
+    public List<TripResponse> findNearbyRequestedTrips(double lat, double lng, double radiusKm) {
+        if (radiusKm <= 0) {
+            throw new IllegalArgumentException("radiusKm must be positive");
+        }
+
+        List<Long> orderedIds = tripRepository.findNearbyRequestedTripIds(lat, lng, radiusKm).stream()
+                .map(Number::longValue)
+                .toList();
+        if (orderedIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Trip> byId = tripRepository.findByIdInWithRiderAndDriver(orderedIds).stream()
+                .collect(Collectors.toMap(Trip::getId, Function.identity()));
+
+        List<TripResponse> results = new ArrayList<>(orderedIds.size());
+        for (Long id : orderedIds) {
+            Trip trip = byId.get(id);
+            if (trip != null) {
+                results.add(toResponse(trip));
+            }
+        }
+        return results;
     }
 
     @Transactional
