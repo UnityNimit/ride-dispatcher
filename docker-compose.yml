@@ -1,0 +1,39 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: dispatchhub-db
+    environment:
+      POSTGRES_DB: dispatchhub
+      POSTGRES_USER: dispatchhub
+      POSTGRES_PASSWORD: dispatchhub
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: dispatchhub-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_URL=jdbc:postgresql://db:5432/dispatchhub
+      - DB_USERNAME=dispatchhub
+      - DB_PASSWORD=dispatchhub
+      - CORS_ALLOWED_ORIGINS=http://localhost,http://localhost:4200
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    container_name: dispatchhub-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
