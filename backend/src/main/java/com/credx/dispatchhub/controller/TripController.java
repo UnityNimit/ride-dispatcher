@@ -83,12 +83,10 @@ public class TripController {
         return ResponseEntity.ok(tripService.findNearbyRequestedTrips(lat, lng, radiusKm));
     }
 
-    // Any authenticated user (rider, driver, admin) can fetch a trip by id -
-    // used by the admin dashboard's trip detail page as well as the rider's
-    // own trip detail page. Ownership of the trip is not verified here.
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('RIDER', 'DRIVER', 'ADMIN')")
     public ResponseEntity<TripResponse> getTrip(@PathVariable Long id) {
-        return ResponseEntity.ok(tripService.getTripById(id));
+        return ResponseEntity.ok(tripService.getTripById(id, currentUser.id()));
     }
 
     @PostMapping("/{id}/accept")
