@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
-RUN npm run build --configuration=production
+RUN npm run build -- --configuration=production
 
 FROM nginx:alpine
 COPY --from=build /app/dist/dispatchhub-frontend/browser /usr/share/nginx/html
