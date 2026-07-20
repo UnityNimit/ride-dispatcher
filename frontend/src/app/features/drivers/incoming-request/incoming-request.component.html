@@ -20,7 +20,12 @@
   @if (!isAvailable()) {
     <mat-card class="dh-empty-state">
       <mat-icon>wifi_off</mat-icon>
-      <p>Go online (AVAILABLE) to accept trip requests.</p>
+      @if (driver()?.status === 'ON_TRIP') {
+        <p>You are on an active trip. Open <strong>My trips</strong> to mark arrived, start, or complete.</p>
+        <button mat-flat-button color="primary" routerLink="/driver-trips">Go to my trips</button>
+      } @else {
+        <p>Go online (AVAILABLE) to accept trip requests.</p>
+      }
     </mat-card>
   } @else if (!hasLocation()) {
     <mat-card class="dh-empty-state">

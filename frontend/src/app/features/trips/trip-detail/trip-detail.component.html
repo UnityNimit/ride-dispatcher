@@ -1,139 +1,187 @@
-<div class="dh-page">
-  <div class="dh-page-header">
-    <button mat-icon-button (click)="goBack()">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-    <h1>Trip detail</h1>
-  </div>
-
-  @if (loading()) {
-    <div class="dh-loading-state">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>Loading trip...</p>
-    </div>
-  } @else if (notFound()) {
-    <mat-card class="dh-empty-state">
-      <mat-icon>error_outline</mat-icon>
-      <p>We couldn't find that trip.</p>
-    </mat-card>
-  } @else if (trip(); as t) {
-    <div class="trip-grid">
-      <mat-card class="trip-summary-card">
-        <div class="summary-header">
-          <span class="trip-id">Trip #{{ t.id }}</span>
-          <app-trip-status-chip [status]="t.status"></app-trip-status-chip>
-        </div>
-
-        <mat-divider></mat-divider>
-
-        <div class="summary-row">
-          <mat-icon>my_location</mat-icon>
-          <div>
-            <span class="label">Pickup</span>
-            <p>{{ t.pickupAddress }}</p>
-          </div>
-        </div>
-        <div class="summary-row">
-          <mat-icon>flag</mat-icon>
-          <div>
-            <span class="label">Dropoff</span>
-            <p>{{ t.dropoffAddress }}</p>
-          </div>
-        </div>
-
-        <mat-divider></mat-divider>
-
-        <div class="summary-row">
-          <mat-icon>person</mat-icon>
-          <div>
-            <span class="label">Rider</span>
-            <p>{{ t.riderName }}</p>
-          </div>
-        </div>
-        @if (t.driverName) {
-          <div class="summary-row">
-            <mat-icon>badge</mat-icon>
-            <div>
-              <span class="label">Driver</span>
-              <p>{{ t.driverName }} — {{ t.driverVehicle }} ({{ t.driverLicensePlate }})</p>
-            </div>
-          </div>
-        }
-
-        <mat-divider></mat-divider>
-
-        <div class="summary-row">
-          <mat-icon>payments</mat-icon>
-          <div>
-            <span class="label">Fare</span>
-            <p>
-              Estimate: {{ t.fareEstimate ? ('$' + t.fareEstimate.toFixed(2)) : '—' }}
-              @if (t.finalFare) { &middot; Final: ${{ t.finalFare.toFixed(2) }} }
-            </p>
-          </div>
-        </div>
-        @if (t.distanceKm) {
-          <div class="summary-row">
-            <mat-icon>straighten</mat-icon>
-            <div>
-              <span class="label">Distance</span>
-              <p>{{ t.distanceKm.toFixed(1) }} km</p>
-            </div>
-          </div>
-        }
-
-        @if (canForceCancel(t)) {
-          <mat-divider></mat-divider>
-          <button
-            mat-stroked-button
-            color="warn"
-            class="action-btn"
-            (click)="forceCancel()"
-            [disabled]="actionBusy()">
-            Force cancel trip
-          </button>
-        }
-
-        @if (canReview(t)) {
-          <mat-divider></mat-divider>
-          <div class="review-block">
-            <h3>Rate your driver</h3>
-            <mat-form-field appearance="outline" class="dh-full-width">
-              <mat-label>Rating (1–5)</mat-label>
-              <input matInput type="number" min="1" max="5" [ngModel]="reviewRating()" (ngModelChange)="reviewRating.set($event)" />
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="dh-full-width">
-              <mat-label>Comment (optional)</mat-label>
-              <textarea matInput rows="2" [ngModel]="reviewComment()" (ngModelChange)="reviewComment.set($event)"></textarea>
-            </mat-form-field>
-            <button mat-flat-button color="primary" (click)="submitReview()" [disabled]="actionBusy()">
-              Submit review
-            </button>
-          </div>
-        }
-      </mat-card>
-
-      <mat-card class="timeline-card">
-        <h2>Status timeline</h2>
-        @if (t.statusHistory.length === 0) {
-          <div class="dh-empty-state">
-            <mat-icon>history</mat-icon>
-            <p>No status changes recorded yet.</p>
-          </div>
-        } @else {
-          <ul class="timeline">
-            @for (entry of t.statusHistory; track entry.changedAt) {
-              <li>
-                <app-trip-status-chip [status]="entry.status"></app-trip-status-chip>
-                <span class="timeline-time">{{ formatTimestamp(entry.changedAt) }}</span>
-                @if (entry.note) {
-                  <span class="timeline-note">{{ entry.note }}</span>
-                }
-              </li>
-            }
-          </ul>
-        }
-      </mat-card>
-    </div>
-  }
-</div>
+<div class="dh-page">
+  <div class="dh-page-header">
+    <button mat-icon-button (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1>Trip detail</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="dh-loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading trip...</p>
+    </div>
+  } @else if (notFound()) {
+    <mat-card class="dh-empty-state">
+      <mat-icon>error_outline</mat-icon>
+      <p>We couldn't find that trip.</p>
+    </mat-card>
+  } @else if (trip(); as t) {
+    <div class="trip-grid">
+      <mat-card class="trip-summary-card">
+        <div class="summary-header">
+          <span class="trip-id">Trip #{{ t.id }}</span>
+          <app-trip-status-chip [status]="t.status"></app-trip-status-chip>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="summary-row">
+          <mat-icon>my_location</mat-icon>
+          <div>
+            <span class="label">Pickup</span>
+            <p>{{ t.pickupAddress }}</p>
+          </div>
+        </div>
+        <div class="summary-row">
+          <mat-icon>flag</mat-icon>
+          <div>
+            <span class="label">Dropoff</span>
+            <p>{{ t.dropoffAddress }}</p>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="summary-row">
+          <mat-icon>person</mat-icon>
+          <div>
+            <span class="label">Rider</span>
+            <p>{{ t.riderName }}</p>
+          </div>
+        </div>
+        @if (t.driverName) {
+          <div class="summary-row">
+            <mat-icon>badge</mat-icon>
+            <div>
+              <span class="label">Driver</span>
+              <p>{{ t.driverName }} — {{ t.driverVehicle }} ({{ t.driverLicensePlate }})</p>
+            </div>
+          </div>
+        }
+
+        <mat-divider></mat-divider>
+
+        <div class="summary-row">
+          <mat-icon>payments</mat-icon>
+          <div>
+            <span class="label">Fare</span>
+            <p>
+              Estimate: {{ t.fareEstimate ? ('$' + t.fareEstimate.toFixed(2)) : '—' }}
+              @if (t.finalFare) { &middot; Final: ${{ t.finalFare.toFixed(2) }} }
+            </p>
+          </div>
+        </div>
+        @if (t.distanceKm) {
+          <div class="summary-row">
+            <mat-icon>straighten</mat-icon>
+            <div>
+              <span class="label">Distance</span>
+              <p>{{ t.distanceKm.toFixed(1) }} km</p>
+            </div>
+          </div>
+        }
+
+        <mat-card class="actions-card">
+          <h2>Trip actions</h2>
+
+          @if (isDriver()) {
+            <p class="action-hint">
+              Advance the trip: Arrived → Start → Complete. While ON_TRIP you will not see new incoming requests.
+            </p>
+            <div class="action-row">
+              @if (t.status === 'REQUESTED') {
+                <button mat-flat-button color="primary" (click)="acceptTrip()" [disabled]="actionBusy()">
+                  <mat-icon>check</mat-icon>
+                  Accept trip
+                </button>
+              }
+              @if (t.status === 'ACCEPTED') {
+                <button mat-flat-button color="primary" (click)="markArrived()" [disabled]="actionBusy()">
+                  <mat-icon>location_on</mat-icon>
+                  Mark arrived
+                </button>
+              }
+              @if (t.status === 'ARRIVED') {
+                <button mat-flat-button color="accent" (click)="startTrip()" [disabled]="actionBusy()">
+                  <mat-icon>directions_car</mat-icon>
+                  Start trip
+                </button>
+              }
+              @if (t.status === 'IN_PROGRESS') {
+                <button mat-flat-button class="complete-btn" (click)="completeTrip()" [disabled]="actionBusy()">
+                  <mat-icon>check_circle</mat-icon>
+                  Complete trip
+                </button>
+              }
+              @if (t.status === 'COMPLETED' || t.status === 'CANCELLED') {
+                <p class="action-done">This trip is finished. You can accept new requests from Incoming requests.</p>
+              }
+            </div>
+          }
+
+          @if (isRider()) {
+            <p class="action-hint">Track live status below. Your driver completes the ride after pickup.</p>
+            @if (canCancel(t)) {
+              <div class="action-row">
+                <button mat-stroked-button color="warn" (click)="cancelTrip()" [disabled]="actionBusy()">
+                  <mat-icon>cancel</mat-icon>
+                  Cancel trip
+                </button>
+              </div>
+            }
+          }
+
+          @if (canForceCancel(t)) {
+            <div class="action-row">
+              <button mat-stroked-button color="warn" (click)="forceCancel()" [disabled]="actionBusy()">
+                <mat-icon>block</mat-icon>
+                Force cancel trip
+              </button>
+            </div>
+          }
+
+          @if (canReview(t)) {
+            <div class="review-block">
+              <h3>Rate your driver</h3>
+              <mat-form-field appearance="outline" class="dh-full-width">
+                <mat-label>Rating (1–5)</mat-label>
+                <input matInput type="number" min="1" max="5" [ngModel]="reviewRating()" (ngModelChange)="reviewRating.set($event)" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="dh-full-width">
+                <mat-label>Comment (optional)</mat-label>
+                <textarea matInput rows="2" [ngModel]="reviewComment()" (ngModelChange)="reviewComment.set($event)"></textarea>
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="submitReview()" [disabled]="actionBusy()">
+                Submit review
+              </button>
+            </div>
+          }
+        </mat-card>
+      </mat-card>
+
+      <mat-card class="timeline-card">
+        <h2>Status timeline</h2>
+        @if (t.statusHistory.length === 0) {
+          <div class="dh-empty-state">
+            <mat-icon>history</mat-icon>
+            <p>No status changes recorded yet.</p>
+          </div>
+        } @else {
+          <ul class="timeline">
+            @for (entry of t.statusHistory; track entry.changedAt) {
+              <li>
+                <app-trip-status-chip [status]="entry.status"></app-trip-status-chip>
+                <span class="timeline-time">{{ formatTimestamp(entry.changedAt) }}</span>
+                @if (entry.note) {
+                  <span class="timeline-note">{{ entry.note }}</span>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </mat-card>
+    </div>
+  }
+</div>
+

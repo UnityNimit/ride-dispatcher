@@ -59,7 +59,10 @@ export class MainLayoutComponent {
     }
 
     if (role === 'DRIVER') {
-      links.push({ label: 'Incoming requests', path: '/incoming-requests', icon: 'notifications_active' });
+      links.push(
+        { label: 'Incoming requests', path: '/incoming-requests', icon: 'notifications_active' },
+        { label: 'My trips', path: '/driver-trips', icon: 'local_taxi' }
+      );
     }
 
     return links;

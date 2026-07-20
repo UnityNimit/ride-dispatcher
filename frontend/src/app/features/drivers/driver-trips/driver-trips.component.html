@@ -1,0 +1,86 @@
+<div class="dh-page">
+  <div class="dh-page-header">
+    <h1>My trips</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="dh-loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading your trips...</p>
+    </div>
+  } @else {
+    @if (activeTrip(); as active) {
+      <mat-card class="active-banner">
+        <div class="active-banner-content">
+          <div>
+            <h2>Active trip #{{ active.id }}</h2>
+            <p>Open trip detail to mark arrived, start, and complete. New requests appear only when you are AVAILABLE again.</p>
+            <app-trip-status-chip [status]="active.status"></app-trip-status-chip>
+          </div>
+          <button mat-flat-button color="primary" (click)="viewTrip(active)">
+            <mat-icon>directions_car</mat-icon>
+            Manage active trip
+          </button>
+        </div>
+      </mat-card>
+    }
+
+    @if (trips().length === 0) {
+      <mat-card class="dh-empty-state">
+        <mat-icon>local_taxi</mat-icon>
+        <p>No trips assigned yet. Accept a request from Incoming requests.</p>
+      </mat-card>
+    } @else {
+      <div class="table-wrapper">
+        <table mat-table [dataSource]="trips()" class="dh-full-width">
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let trip">#{{ trip.id }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="rider">
+            <th mat-header-cell *matHeaderCellDef>Rider</th>
+            <td mat-cell *matCellDef="let trip">{{ trip.riderName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let trip">
+              <app-trip-status-chip [status]="trip.status"></app-trip-status-chip>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="requestedAt">
+            <th mat-header-cell *matHeaderCellDef>Requested</th>
+            <td mat-cell *matCellDef="let trip">{{ formatTimestamp(trip.requestedAt) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="fareEstimate">
+            <th mat-header-cell *matHeaderCellDef>Fare est.</th>
+            <td mat-cell *matCellDef="let trip">{{ trip.fareEstimate ? ('$' + trip.fareEstimate.toFixed(2)) : '—' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let trip">
+              <button mat-button color="primary" (click)="viewTrip(trip)">
+                {{ isActive(trip.status) ? 'Manage' : 'View' }}
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalElements()"
+        [pageSize]="pageSize()"
+        [pageIndex]="pageIndex()"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPageChange($event)">
+      </mat-paginator>
+    }
+  }
+</div>

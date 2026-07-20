@@ -50,6 +50,11 @@ export class TripService {
     return this.http.get<Trip[]>(`${this.baseUrl}/nearby`, { params });
   }
 
+  getDriverTrips(driverProfileId: number, page: number, size: number): Observable<PageResponse<Trip>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PageResponse<Trip>>(`${this.baseUrl}/driver/${driverProfileId}`, { params });
+  }
+
   getTripById(id: number): Observable<Trip> {
     return this.http.get<Trip>(`${this.baseUrl}/${id}`);
   }

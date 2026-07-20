@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval, startWith, switchMap, catchError, of } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
@@ -25,7 +25,8 @@ import { environment } from '../../../../environments/environment';
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    RouterLink
   ],
   templateUrl: './incoming-request.component.html',
   styleUrl: './incoming-request.component.scss'

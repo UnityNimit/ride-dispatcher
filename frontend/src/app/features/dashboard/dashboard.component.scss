@@ -1,2 +1,80 @@
-// Intentionally minimal - most layout comes from the shared .dh-page /
-// .dh-card-grid utility classes in styles.scss.
+.rider-dash {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1.4fr;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quick-actions,
+.recent-card {
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0 0 16px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.driver-status {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-list li {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover,
+  &:focus {
+    background: rgba(30, 136, 229, 0.06);
+    outline: none;
+  }
+}
+
+.recent-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.recent-id {
+  font-weight: 600;
+}
+
+.recent-route {
+  margin: 6px 0 4px;
+  font-size: 0.9rem;
+}
+
+.recent-meta {
+  font-size: 0.75rem;
+  color: rgba(0, 0, 0, 0.54);
+}

@@ -23,10 +23,92 @@
       <app-stat-card label="Registered drivers" [value]="s.totalRegisteredDrivers" icon="groups" iconColor="#8e24aa"></app-stat-card>
       <app-stat-card label="Registered riders" [value]="s.totalRegisteredRiders" icon="person" iconColor="#8e24aa"></app-stat-card>
     </div>
+  } @else if (currentRole() === 'RIDER') {
+    <div class="rider-dash">
+      <mat-card class="quick-actions">
+        <h2>Quick actions</h2>
+        <p>Book a ride or open your history. The driver completes the trip after pickup.</p>
+        <div class="btn-row">
+          <a mat-flat-button color="primary" routerLink="/request-ride">Request a ride</a>
+          <a mat-stroked-button routerLink="/trip-history">My trip history</a>
+        </div>
+      </mat-card>
+
+      <mat-card class="recent-card">
+        <h2>Your recent trips</h2>
+        @if (recentTrips().length === 0) {
+          <div class="dh-empty-state">
+            <mat-icon>local_taxi</mat-icon>
+            <p>No trips yet. Request a ride to get started.</p>
+          </div>
+        } @else {
+          <ul class="recent-list">
+            @for (trip of recentTrips(); track trip.id) {
+              <li (click)="openTrip(trip)" (keyup.enter)="openTrip(trip)" tabindex="0" role="button">
+                <div class="recent-main">
+                  <span class="recent-id">#{{ trip.id }}</span>
+                  <app-trip-status-chip [status]="trip.status"></app-trip-status-chip>
+                </div>
+                <p class="recent-route">{{ trip.pickupAddress }} → {{ trip.dropoffAddress }}</p>
+                <span class="recent-meta">{{ formatTimestamp(trip.requestedAt) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </mat-card>
+    </div>
+  } @else if (currentRole() === 'DRIVER') {
+    <div class="rider-dash">
+      <mat-card class="quick-actions">
+        <h2>Driver hub</h2>
+        @if (isOnTrip() && activeDriverTrip(); as active) {
+          <p>You are ON_TRIP. Finish trip #{{ active.id }} before new incoming requests appear.</p>
+          <div class="btn-row">
+            <button mat-flat-button color="primary" (click)="openTrip(active)">
+              <mat-icon>directions_car</mat-icon>
+              Manage active trip
+            </button>
+            <a mat-stroked-button routerLink="/driver-trips">My trips</a>
+          </div>
+        } @else {
+          <p>Go online, accept nearby requests, then use trip detail to arrive, start, and complete.</p>
+          <div class="btn-row">
+            <a mat-flat-button color="primary" routerLink="/incoming-requests">Incoming requests</a>
+            <a mat-stroked-button routerLink="/driver-trips">My trips</a>
+          </div>
+        }
+        @if (driverProfile(); as d) {
+          <p class="driver-status">Status: <strong>{{ d.status }}</strong></p>
+        }
+      </mat-card>
+
+      <mat-card class="recent-card">
+        <h2>Recent assignments</h2>
+        @if (recentTrips().length === 0) {
+          <div class="dh-empty-state">
+            <mat-icon>local_taxi</mat-icon>
+            <p>No trips yet. Accept a request from Incoming requests.</p>
+          </div>
+        } @else {
+          <ul class="recent-list">
+            @for (trip of recentTrips(); track trip.id) {
+              <li (click)="openTrip(trip)" (keyup.enter)="openTrip(trip)" tabindex="0" role="button">
+                <div class="recent-main">
+                  <span class="recent-id">#{{ trip.id }}</span>
+                  <app-trip-status-chip [status]="trip.status"></app-trip-status-chip>
+                </div>
+                <p class="recent-route">{{ trip.pickupAddress }} → {{ trip.dropoffAddress }}</p>
+                <span class="recent-meta">{{ formatTimestamp(trip.requestedAt) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </mat-card>
+    </div>
   } @else {
     <mat-card class="dh-empty-state">
       <mat-icon>dashboard</mat-icon>
-      <p>Use the sidebar to request a ride or view your trip history.</p>
+      <p>Use the sidebar to navigate.</p>
     </mat-card>
   }
 </div>
