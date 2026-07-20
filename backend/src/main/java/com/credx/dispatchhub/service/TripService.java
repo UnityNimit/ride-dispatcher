@@ -80,6 +80,9 @@ public class TripService {
         trip = tripRepository.save(trip);
         return publishTripUpdate(toResponse(trip));
     }
+
+    @Transactional(readOnly = true)
+    public FareEstimateResponse estimateFare(double pickupLat, double pickupLng, double dropoffLat, double dropoffLng) {
         return fareEstimationService.estimate(pickupLat, pickupLng, dropoffLat, dropoffLng);
     }
 
