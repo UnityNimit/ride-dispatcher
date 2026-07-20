@@ -39,4 +39,12 @@ export class DriverService {
   updateLocation(request: DriverLocationUpdateRequest): Observable<DriverProfile> {
     return this.http.patch<DriverProfile>(`${this.baseUrl}/me/location`, request);
   }
+
+  findNearby(lat: number, lng: number, radiusKm = 5): Observable<DriverProfile[]> {
+    const params = new HttpParams()
+      .set('lat', lat)
+      .set('lng', lng)
+      .set('radiusKm', radiusKm);
+    return this.http.get<DriverProfile[]>(`${this.baseUrl}/nearby`, { params });
+  }
 }

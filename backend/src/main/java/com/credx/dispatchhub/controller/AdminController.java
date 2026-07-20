@@ -2,7 +2,10 @@ package com.credx.dispatchhub.controller;
 
 import com.credx.dispatchhub.dto.response.DashboardStatsResponse;
 import com.credx.dispatchhub.dto.response.DriverTripStatsResponse;
+import com.credx.dispatchhub.dto.response.TripResponse;
+import com.credx.dispatchhub.security.CurrentUser;
 import com.credx.dispatchhub.service.AnalyticsService;
+import com.credx.dispatchhub.service.TripService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +28,8 @@ import java.util.List;
 public class AdminController {
 
     private final AnalyticsService analyticsService;
+    private final TripService tripService;
+    private final CurrentUser currentUser;
 
     @GetMapping("/dashboard-stats")
     public ResponseEntity<DashboardStatsResponse> getDashboardStats() {
@@ -40,18 +45,10 @@ public class AdminController {
         return ResponseEntity.ok(analyticsService.getTripsPerDriver(effectiveFrom, effectiveTo));
     }
 
-    /**
-     * TODO: admin "stuck trip" recovery endpoint - not implemented yet.
-     * Needed behavior: given a tripId, force-transition it to CANCELLED (or
-     * allow reassigning to a different available driver) regardless of the
-     * normal state machine rules in TripService, for trips stuck in ACCEPTED/
-     * ARRIVED/IN_PROGRESS because a driver's app crashed or lost connectivity.
-     * Should probably live in TripService as forceCancelTrip(tripId, adminId)
-     * / reassignTrip(tripId, newDriverId) rather than duplicating trip state
-     * logic here.
-     */
     @PostMapping("/trips/{id}/force-cancel")
-    public ResponseEntity<Void> forceCancelTrip(@PathVariable Long id) {
-        throw new UnsupportedOperationException("Force-cancel for stuck trips is not implemented yet");
+    public ResponseEntity<TripResponse> forceCancelTrip(
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
+        return ResponseEntity.ok(tripService.forceCancelTrip(id, currentUser.id(), reason));
     }
 }

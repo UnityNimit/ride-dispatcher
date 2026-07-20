@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,16 +17,14 @@ import { StatCardComponent } from '../shared/components/stat-card.component';
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
+  private readonly dashboardService = inject(DashboardService);
+  private readonly authService = inject(AuthService);
+
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly stats = signal<DashboardStats | null>(null);
 
   readonly currentUser = this.authService.currentUser;
-
-  constructor(
-    private dashboardService: DashboardService,
-    private authService: AuthService
-  ) {}
 
   ngOnInit(): void {
     // Only admins have access to /api/admin/dashboard-stats server-side;
@@ -42,7 +40,7 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set('Unable to load dashboard stats right now.');
+        this.error.set('Failed to load dashboard stats');
         this.loading.set(false);
       }
     });

@@ -19,6 +19,9 @@
           <mat-label>Dropoff address</mat-label>
           <input matInput formControlName="dropoffAddress" placeholder="Ferry Building, San Francisco, CA" />
           <mat-icon matPrefix>flag</mat-icon>
+          @if (form.controls.dropoffAddress.hasError('required') && form.controls.dropoffAddress.touched) {
+            <mat-error>Dropoff address is required</mat-error>
+          }
         </mat-form-field>
 
         @if (submitError()) {
@@ -37,13 +40,15 @@
 
     <mat-card class="fare-card">
       <h2>Fare estimate</h2>
-      @if (fareEstimate(); as estimate) {
-        <div class="fare-amount">${{ estimate.estimatedFare.toFixed(2) }}</div>
-        <p class="fare-meta">{{ estimate.distanceKm.toFixed(1) }} km &middot; ~{{ estimate.estimatedDurationMinutes.toFixed(0) }} min</p>
-      } @else {
+      @if (estimating()) {
         <div class="dh-loading-state">
           <mat-spinner diameter="28"></mat-spinner>
         </div>
+      } @else if (fareEstimate(); as estimate) {
+        <div class="fare-amount">${{ estimate.estimatedFare.toFixed(2) }}</div>
+        <p class="fare-meta">{{ estimate.distanceKm.toFixed(1) }} km &middot; ~{{ estimate.estimatedDurationMinutes.toFixed(0) }} min</p>
+      } @else {
+        <p class="fare-meta">Enter pickup and dropoff to see an estimate.</p>
       }
       <p class="fare-disclaimer">Final fare may vary based on route, traffic, and wait time.</p>
     </mat-card>

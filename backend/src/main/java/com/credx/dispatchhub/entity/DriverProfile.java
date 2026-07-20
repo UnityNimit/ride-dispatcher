@@ -59,9 +59,9 @@ public class DriverProfile {
     @Builder.Default
     private int totalTrips = 0;
 
-    // Optimistic locking to guard against the classic "two riders accept the same
-    // driver" race. NOTE: this column exists, but the accept-trip flow does not
-    // currently rely on it to short-circuit a conflicting update.
+    // Optimistic locking to guard against the classic "same driver accepts two
+    // trips concurrently" race. TripService.acceptTrip saves with flush so a
+    // conflicting update surfaces as OptimisticLockingFailureException (409).
     @Version
     @Column(name = "version")
     private Long version;

@@ -1,4 +1,4 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -35,6 +35,9 @@ interface NavLink {
   styleUrl: './main-layout.component.scss'
 })
 export class MainLayoutComponent {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
   readonly currentUser = this.authService.currentUser;
 
   readonly navLinks = computed<NavLink[]>(() => {
@@ -61,11 +64,6 @@ export class MainLayoutComponent {
 
     return links;
   });
-
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
 
   logout(): void {
     this.authService.logout();

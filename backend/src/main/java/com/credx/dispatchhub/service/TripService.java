@@ -12,6 +12,7 @@ import com.credx.dispatchhub.entity.TripStatusHistory;
 import com.credx.dispatchhub.entity.User;
 import com.credx.dispatchhub.enums.DriverStatus;
 import com.credx.dispatchhub.enums.TripStatus;
+import com.credx.dispatchhub.enums.UserRole;
 import com.credx.dispatchhub.exception.DriverUnavailableException;
 import com.credx.dispatchhub.exception.InvalidTripStateException;
 import com.credx.dispatchhub.exception.ResourceNotFoundException;
@@ -21,6 +22,7 @@ import com.credx.dispatchhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,7 +118,8 @@ public class TripService {
 
     @Transactional
     public TripResponse acceptTrip(Long tripId, Long driverUserId) {
-        Trip trip = tripRepository.findById(tripId)
+        // Pessimistic lock prevents two drivers from claiming the same REQUESTED trip.
+        Trip trip = tripRepository.findByIdForUpdate(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
 
         if (trip.getStatus() != TripStatus.REQUESTED) {
@@ -126,15 +129,14 @@ public class TripService {
         DriverProfile driver = driverProfileRepository.findByUserId(driverUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Driver profile not found"));
 
-        // Check-then-act on driver availability: two concurrent accept requests
-        // for two different trips can both read AVAILABLE here before either
-        // write lands, so both trips end up assigned to the same driver.
         if (driver.getStatus() != DriverStatus.AVAILABLE) {
             throw new DriverUnavailableException("Driver is not currently available");
         }
 
+        // @Version on DriverProfile short-circuits concurrent accepts by the same
+        // driver onto two different trips (OptimisticLockingFailureException → 409).
         driver.setStatus(DriverStatus.ON_TRIP);
-        driverProfileRepository.save(driver);
+        driverProfileRepository.saveAndFlush(driver);
 
         trip.setDriver(driver);
         trip.setStatus(TripStatus.ACCEPTED);
@@ -213,13 +215,33 @@ public class TripService {
 
     /**
      * Cancels a trip. Riders can cancel their own trip; drivers can cancel a
-     * trip assigned to them. NOTE: this only checks that the trip exists and
-     * is in a cancellable state - it does not verify the caller is the rider
-     * who requested it before allowing the cancellation to proceed for the
-     * rider-initiated path.
+     * trip assigned to them; admins can cancel any non-terminal trip.
      */
     @Transactional
     public TripResponse cancelTrip(Long tripId, Long requesterUserId, CancelTripRequest request) {
+        Trip trip = tripRepository.findById(tripId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
+
+        assertCanCancel(trip, requesterUserId);
+
+        if (trip.getStatus() == TripStatus.COMPLETED || trip.getStatus() == TripStatus.CANCELLED) {
+            throw new InvalidTripStateException("Trip is already " + trip.getStatus());
+        }
+
+        return applyCancellation(trip, request != null ? request.reason() : null);
+    }
+
+    /**
+     * Admin recovery path for trips stuck mid-lifecycle (driver app crash, etc.).
+     */
+    @Transactional
+    public TripResponse forceCancelTrip(Long tripId, Long adminUserId, String reason) {
+        User admin = userRepository.findById(adminUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (admin.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("Only admins can force-cancel trips");
+        }
+
         Trip trip = tripRepository.findById(tripId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trip not found with id: " + tripId));
 
@@ -227,22 +249,10 @@ public class TripService {
             throw new InvalidTripStateException("Trip is already " + trip.getStatus());
         }
 
-        trip.setStatus(TripStatus.CANCELLED);
-        trip.setCancelledAt(Instant.now());
-        trip.setCancellationReason(request != null ? request.reason() : null);
-        trip.addStatusHistory(TripStatusHistory.builder()
-                .status(TripStatus.CANCELLED)
-                .changedAt(Instant.now())
-                .note(request != null ? request.reason() : null)
-                .build());
-
-        if (trip.getDriver() != null && trip.getDriver().getStatus() == DriverStatus.ON_TRIP) {
-            DriverProfile driver = trip.getDriver();
-            driver.setStatus(DriverStatus.AVAILABLE);
-            driverProfileRepository.save(driver);
-        }
-
-        return toResponse(tripRepository.save(trip));
+        String note = reason != null && !reason.isBlank()
+                ? reason
+                : "Force-cancelled by admin";
+        return applyCancellation(trip, note);
     }
 
     /**
@@ -256,6 +266,47 @@ public class TripService {
         return tripRepository.findByRiderIdOrderByRequestedAtDesc(riderId).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    private void assertCanCancel(Trip trip, Long requesterUserId) {
+        User requester = userRepository.findById(requesterUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (requester.getRole() == UserRole.ADMIN) {
+            return;
+        }
+        if (requester.getRole() == UserRole.RIDER) {
+            if (!trip.getRider().getId().equals(requesterUserId)) {
+                throw new AccessDeniedException("You can only cancel your own trips");
+            }
+            return;
+        }
+        if (requester.getRole() == UserRole.DRIVER) {
+            if (trip.getDriver() == null || !trip.getDriver().getUser().getId().equals(requesterUserId)) {
+                throw new AccessDeniedException("You can only cancel trips assigned to you");
+            }
+            return;
+        }
+        throw new AccessDeniedException("You do not have permission to cancel this trip");
+    }
+
+    private TripResponse applyCancellation(Trip trip, String reason) {
+        trip.setStatus(TripStatus.CANCELLED);
+        trip.setCancelledAt(Instant.now());
+        trip.setCancellationReason(reason);
+        trip.addStatusHistory(TripStatusHistory.builder()
+                .status(TripStatus.CANCELLED)
+                .changedAt(Instant.now())
+                .note(reason)
+                .build());
+
+        if (trip.getDriver() != null && trip.getDriver().getStatus() == DriverStatus.ON_TRIP) {
+            DriverProfile driver = trip.getDriver();
+            driver.setStatus(DriverStatus.AVAILABLE);
+            driverProfileRepository.save(driver);
+        }
+
+        return toResponse(tripRepository.save(trip));
     }
 
     private Trip getOwnedTripForDriver(Long tripId, Long driverUserId) {

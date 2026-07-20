@@ -8,17 +8,21 @@ import com.credx.dispatchhub.entity.DriverProfile;
 import com.credx.dispatchhub.enums.DriverStatus;
 import com.credx.dispatchhub.exception.ResourceNotFoundException;
 import com.credx.dispatchhub.repository.DriverProfileRepository;
+import com.credx.dispatchhub.util.GeoUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class DriverService {
+
+    private static final int MAX_NEARBY_RESULTS = 20;
 
     private final DriverProfileRepository driverProfileRepository;
 
@@ -87,14 +91,32 @@ public class DriverService {
     }
 
     /**
-     * TODO: implement real "nearby available drivers" search.
-     * Intended approach: bounding-box pre-filter on currentLat/currentLng using
-     * the requested radiusKm, then a precise haversine distance check (see
-     * GeoUtils#distanceKm) to filter/sort candidates, capped to a reasonable
-     * result size. Not wired to any controller endpoint yet.
+     * Available drivers within {@code radiusKm} of the given point, nearest first.
      */
+    @Transactional(readOnly = true)
     public List<DriverProfileResponse> findNearbyAvailableDrivers(double lat, double lng, double radiusKm) {
-        throw new UnsupportedOperationException("Nearby driver search is not implemented yet");
+        if (radiusKm <= 0) {
+            throw new IllegalArgumentException("radiusKm must be positive");
+        }
+
+        // Rough bounding-box pre-filter (~111 km per degree latitude).
+        double latDelta = radiusKm / 111.0;
+        double lngDelta = radiusKm / (111.0 * Math.max(0.2, Math.cos(Math.toRadians(lat))));
+
+        return driverProfileRepository.findAllAvailableForNearbySearch().stream()
+                .filter(d -> d.getCurrentLat() >= lat - latDelta
+                        && d.getCurrentLat() <= lat + latDelta
+                        && d.getCurrentLng() >= lng - lngDelta
+                        && d.getCurrentLng() <= lng + lngDelta)
+                .map(d -> new NearbyCandidate(d, GeoUtils.distanceKm(lat, lng, d.getCurrentLat(), d.getCurrentLng())))
+                .filter(c -> c.distanceKm() <= radiusKm)
+                .sorted(Comparator.comparingDouble(NearbyCandidate::distanceKm))
+                .limit(MAX_NEARBY_RESULTS)
+                .map(c -> toResponse(c.driver()))
+                .toList();
+    }
+
+    private record NearbyCandidate(DriverProfile driver, double distanceKm) {
     }
 
     private DriverProfileResponse toResponse(DriverProfile driver) {

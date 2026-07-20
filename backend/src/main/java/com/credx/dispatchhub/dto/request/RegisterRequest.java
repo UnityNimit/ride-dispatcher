@@ -21,11 +21,12 @@ public record RegisterRequest(
         @Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
         String fullName,
 
-        // NOTE: intended to accept E.164-ish numbers (e.g. +14155552671), but this
-        // pattern requires the leading '+' and rejects locally-formatted numbers
-        // that testers commonly type in, e.g. "4155552671" or "(415) 555-2671".
+        // Accepts E.164 (+14155552671) or common US local forms (4155552671, (415) 555-2671).
         @NotBlank(message = "Phone number is required")
-        @Pattern(regexp = "^\\+[1-9]\\d{9,14}$", message = "Phone number must be a valid international number")
+        @Pattern(
+                regexp = "^(\\+[1-9]\\d{9,14}|\\(?\\d{3}\\)?[\\s.-]?\\d{3}[\\s.-]?\\d{4})$",
+                message = "Phone number must be a valid phone number"
+        )
         String phoneNumber,
 
         @NotNull(message = "Role is required")

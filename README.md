@@ -280,6 +280,10 @@ The app starts on `http://localhost:4200` and expects the backend at
 2. `cd backend && mvn spring-boot:run` (leave running).
 3. `cd frontend && npm install && npm start` (leave running).
 4. Visit `http://localhost:4200`, register a new account or log in with a
-   seeded user (see `seed-data/seed.sql` — all seeded users share the
-   password `Password123!`, e.g. `admin@dispatchhub.com` / `Password123!`).
+   seeded user. If the backend `DataLoader` seeded the DB, use:
+   - Admin: `admin@dispatchhub.com` / `Admin123!`
+   - Rider: `rider1@dispatchhub.com` / `Rider123!`
+   - Driver: `driver1@dispatchhub.com` / `Driver123!`
+   If you loaded `seed-data/seed.sql` instead, all seeded users share the
+   password `Password123!` (e.g. `admin@dispatchhub.com` / `Password123!`).
 

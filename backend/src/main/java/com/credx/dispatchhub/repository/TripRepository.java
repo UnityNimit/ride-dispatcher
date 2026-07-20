@@ -4,7 +4,9 @@ import com.credx.dispatchhub.entity.Trip;
 import com.credx.dispatchhub.enums.TripStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -31,6 +33,10 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
 
     @Query("select t from Trip t left join fetch t.rider left join fetch t.driver d left join fetch d.user where t.id = :id")
     Optional<Trip> findByIdWithRiderAndDriver(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select t from Trip t where t.id = :id")
+    Optional<Trip> findByIdForUpdate(@Param("id") Long id);
 
     long countByStatusAndRequestedAtBetween(TripStatus status, Instant from, Instant to);
 

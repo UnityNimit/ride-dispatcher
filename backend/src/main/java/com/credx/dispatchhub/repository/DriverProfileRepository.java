@@ -22,10 +22,10 @@ public interface DriverProfileRepository extends JpaRepository<DriverProfile, Lo
     @Query("select d from DriverProfile d join fetch d.user where d.id = :id")
     Optional<DriverProfile> findByIdWithUser(@Param("id") Long id);
 
-    // TODO: implement a real "nearby drivers" query, e.g. using a bounding-box
-    // pre-filter on currentLat/currentLng followed by a haversine distance
-    // check, or PostGIS ST_DWithin if we add the extension. For now this is
-    // unused - see DriverService#findNearbyAvailableDrivers.
-    @Query("select d from DriverProfile d where d.status = com.credx.dispatchhub.enums.DriverStatus.AVAILABLE")
+    @Query("""
+            select d from DriverProfile d join fetch d.user
+            where d.status = com.credx.dispatchhub.enums.DriverStatus.AVAILABLE
+              and d.currentLat is not null and d.currentLng is not null
+            """)
     List<DriverProfile> findAllAvailableForNearbySearch();
 }

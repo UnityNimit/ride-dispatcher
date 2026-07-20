@@ -45,10 +45,14 @@ public class TripController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DRIVER')")
     public ResponseEntity<PageResponse<TripResponse>> listTrips(
             @RequestParam(required = false) TripStatus status,
             @PageableDefault(size = 20, sort = "requestedAt") Pageable pageable) {
+        // Drivers may browse open REQUESTED trips for the incoming-request inbox.
+        if ("DRIVER".equals(currentUser.get().getRole()) && status != TripStatus.REQUESTED) {
+            status = TripStatus.REQUESTED;
+        }
         return ResponseEntity.ok(PageResponse.of(tripService.listTrips(status, pageable)));
     }
 
@@ -101,9 +105,8 @@ public class TripController {
         return ResponseEntity.ok(tripService.completeTrip(id, currentUser.id(), request));
     }
 
-    // Riders cancel their own trips, drivers can cancel a trip assigned to
-    // them. The service layer checks trip state but not that the calling
-    // rider actually owns this trip.
+    // Riders cancel their own trips, drivers cancel trips assigned to them,
+    // admins can cancel any non-terminal trip. Ownership is enforced in TripService.
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('RIDER', 'DRIVER', 'ADMIN')")
     public ResponseEntity<TripResponse> cancelTrip(@PathVariable Long id,

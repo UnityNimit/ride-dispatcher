@@ -1,0 +1,77 @@
+<div class="dh-page">
+  <div class="dh-page-header">
+    <h1>Incoming requests</h1>
+    @if (driver(); as d) {
+      <div class="status-actions">
+        <span class="status-label">Status: {{ d.status }}</span>
+        @if (!isAvailable()) {
+          <button mat-flat-button color="primary" (click)="goOnline()" [disabled]="goingOnline()">
+            @if (goingOnline()) {
+              <mat-spinner diameter="18"></mat-spinner>
+            } @else {
+              Go online
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (!isAvailable()) {
+    <mat-card class="dh-empty-state">
+      <mat-icon>wifi_off</mat-icon>
+      <p>Go online (AVAILABLE) to accept trip requests.</p>
+    </mat-card>
+  } @else if (loading()) {
+    <div class="dh-loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Looking for nearby trip requests...</p>
+    </div>
+  } @else if (requests().length === 0) {
+    <mat-card class="dh-empty-state">
+      <mat-icon>notifications_active</mat-icon>
+      <p>No open trip requests right now. This page refreshes automatically.</p>
+    </mat-card>
+  } @else {
+    <div class="request-list">
+      @for (trip of requests(); track trip.id) {
+        <mat-card class="request-card">
+          <div class="request-header">
+            <span class="trip-id">Trip #{{ trip.id }}</span>
+            <span class="requested-at">{{ formatTimestamp(trip.requestedAt) }}</span>
+          </div>
+          <div class="request-row">
+            <mat-icon>my_location</mat-icon>
+            <div>
+              <span class="label">Pickup</span>
+              <p>{{ trip.pickupAddress }}</p>
+            </div>
+          </div>
+          <div class="request-row">
+            <mat-icon>flag</mat-icon>
+            <div>
+              <span class="label">Dropoff</span>
+              <p>{{ trip.dropoffAddress }}</p>
+            </div>
+          </div>
+          <div class="request-footer">
+            <span class="fare">
+              {{ trip.fareEstimate ? ('~$' + trip.fareEstimate.toFixed(2)) : 'Fare TBD' }}
+            </span>
+            <button
+              mat-flat-button
+              color="primary"
+              (click)="accept(trip)"
+              [disabled]="acceptingId() === trip.id">
+              @if (acceptingId() === trip.id) {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                Accept
+              }
+            </button>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

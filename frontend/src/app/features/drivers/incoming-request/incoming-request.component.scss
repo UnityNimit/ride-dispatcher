@@ -1,0 +1,67 @@
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-label {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.request-list {
+  display: grid;
+  gap: 12px;
+}
+
+.request-card {
+  padding: 16px 20px;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.trip-id {
+  font-weight: 600;
+}
+
+.requested-at {
+  font-size: 0.8rem;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.request-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+
+  mat-icon {
+    color: #1e3a5f;
+    margin-top: 2px;
+  }
+
+  .label {
+    display: block;
+    font-size: 0.75rem;
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.request-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.fare {
+  font-weight: 600;
+  color: #1e3a5f;
+}

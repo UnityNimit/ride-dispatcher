@@ -81,6 +81,36 @@
             </div>
           </div>
         }
+
+        @if (canForceCancel(t)) {
+          <mat-divider></mat-divider>
+          <button
+            mat-stroked-button
+            color="warn"
+            class="action-btn"
+            (click)="forceCancel()"
+            [disabled]="actionBusy()">
+            Force cancel trip
+          </button>
+        }
+
+        @if (canReview(t)) {
+          <mat-divider></mat-divider>
+          <div class="review-block">
+            <h3>Rate your driver</h3>
+            <mat-form-field appearance="outline" class="dh-full-width">
+              <mat-label>Rating (1–5)</mat-label>
+              <input matInput type="number" min="1" max="5" [ngModel]="reviewRating()" (ngModelChange)="reviewRating.set($event)" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="dh-full-width">
+              <mat-label>Comment (optional)</mat-label>
+              <textarea matInput rows="2" [ngModel]="reviewComment()" (ngModelChange)="reviewComment.set($event)"></textarea>
+            </mat-form-field>
+            <button mat-flat-button color="primary" (click)="submitReview()" [disabled]="actionBusy()">
+              Submit review
+            </button>
+          </div>
+        }
       </mat-card>
 
       <mat-card class="timeline-card">

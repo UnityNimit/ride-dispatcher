@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -32,6 +32,10 @@ import { UserRole } from '../../../core/models/user.model';
   styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -47,12 +51,6 @@ export class RegisterComponent {
     password: ['', [Validators.required, Validators.minLength(8)]],
     role: ['RIDER' as UserRole, [Validators.required]]
   });
-
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {}
 
   submit(): void {
     if (this.form.invalid) {

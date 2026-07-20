@@ -61,6 +61,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/api/drivers/nearby").authenticated()
                         .requestMatchers("/api/drivers/**").hasAnyRole("ADMIN", "DRIVER")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Trip endpoints are intentionally left open to any authenticated

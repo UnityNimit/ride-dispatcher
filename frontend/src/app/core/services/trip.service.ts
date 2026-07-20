@@ -65,4 +65,8 @@ export class TripService {
   cancelTrip(id: number, request?: CancelTripRequest): Observable<Trip> {
     return this.http.post<Trip>(`${this.baseUrl}/${id}/cancel`, request ?? {});
   }
+
+  submitReview(id: number, rating: number, comment?: string): Observable<unknown> {
+    return this.http.post(`${this.baseUrl}/${id}/review`, { rating, comment: comment ?? null });
+  }
 }
