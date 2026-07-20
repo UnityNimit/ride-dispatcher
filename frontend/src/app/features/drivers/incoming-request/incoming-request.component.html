@@ -4,7 +4,9 @@
     @if (driver(); as d) {
       <div class="status-actions">
         <span class="status-label">Status: {{ d.status }}</span>
-        @if (!isAvailable()) {
+        @if (isAvailable()) {
+          <button mat-stroked-button (click)="goOffline()" [disabled]="goingOnline()">Go offline</button>
+        } @else if (!isOnTrip()) {
           <button mat-flat-button color="primary" (click)="goOnline()" [disabled]="goingOnline()">
             @if (goingOnline()) {
               <mat-spinner diameter="18"></mat-spinner>
@@ -13,6 +15,7 @@
             }
           </button>
         }
+        <a mat-stroked-button routerLink="/driver-settings">Settings</a>
       </div>
     }
   </div>
@@ -30,7 +33,12 @@
   } @else if (!hasLocation()) {
     <mat-card class="dh-empty-state">
       <mat-icon>location_off</mat-icon>
-      <p>Update your location so we can show nearby trip requests.</p>
+      <p>Set your location so we can show nearby trip requests.</p>
+      <div class="location-actions">
+        <button mat-flat-button color="primary" (click)="setDemoLocation()" [disabled]="updatingLocation()">Set demo location (SF)</button>
+        <button mat-stroked-button (click)="useBrowserLocation()" [disabled]="updatingLocation()">Use GPS</button>
+        <a mat-button routerLink="/driver-settings">Driver settings</a>
+      </div>
     </mat-card>
   } @else if (loading()) {
     <div class="dh-loading-state">

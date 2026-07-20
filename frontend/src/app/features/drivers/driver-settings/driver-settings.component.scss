@@ -1,0 +1,38 @@
+.settings-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.settings-card {
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0 0 8px;
+    color: rgba(0, 0, 0, 0.65);
+  }
+}
+
+.profile-card {
+  grid-column: 1 / -1;
+}
+
+.hint, .warn {
+  font-size: 0.85rem;
+}
+
+.warn {
+  color: #e65100;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}

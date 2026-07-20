@@ -25,3 +25,10 @@ export interface DriverLocationUpdateRequest {
   lat: number;
   lng: number;
 }
+
+export interface DriverProfileUpdateRequest {
+  vehicleMake: string;
+  vehicleModel: string;
+  vehicleColor: string | null;
+  licensePlate: string;
+}

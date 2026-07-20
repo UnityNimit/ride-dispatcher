@@ -42,3 +42,30 @@
   font-size: 0.75rem;
   color: rgba(0, 0, 0, 0.5);
 }
+
+.nearby-title {
+  margin: 16px 0 8px;
+  font-size: 0.95rem;
+}
+
+.nearby-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    padding: 6px 0;
+    color: rgba(0, 0, 0, 0.75);
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #1e88e5;
+    }
+  }
+}

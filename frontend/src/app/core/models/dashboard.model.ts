@@ -16,3 +16,11 @@ export interface ApiErrorResponse {
   path: string;
   fieldErrors?: { field: string; message: string }[];
 }
+
+export interface DriverTripStats {
+  driverId: number;
+  driverName: string;
+  completedTrips: number;
+  totalRevenue: number;
+  averageFare: number;
+}

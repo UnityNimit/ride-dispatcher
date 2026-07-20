@@ -12,7 +12,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { TripService } from '../../../core/services/trip.service';
+import { DriverService } from '../../../core/services/driver.service';
 import { FareEstimateResponse } from '../../../core/models/trip.model';
+import { DriverProfile } from '../../../core/models/driver.model';
 
 /**
  * Pickup/dropoff coordinates are derived from typed addresses (hash-based
@@ -52,6 +54,7 @@ export class RequestRideComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly tripService = inject(TripService);
+  private readonly driverService = inject(DriverService);
   private readonly router = inject(Router);
 
   readonly form = this.fb.group({
@@ -60,6 +63,7 @@ export class RequestRideComponent implements OnInit {
   });
 
   readonly fareEstimate = signal<FareEstimateResponse | null>(null);
+  readonly nearbyDrivers = signal<DriverProfile[]>([]);
   readonly estimating = signal(false);
   readonly submitting = signal(false);
   readonly submitError = signal<string | null>(null);
@@ -76,11 +80,15 @@ export class RequestRideComponent implements OnInit {
           const dropoff = (value.dropoffAddress ?? '').trim();
           if (!pickup || !dropoff) {
             this.fareEstimate.set(null);
+            this.nearbyDrivers.set([]);
             return of(null);
           }
           this.estimating.set(true);
           const pickupCoords = coordsFromAddress(pickup, PLACEHOLDER_PICKUP);
           const dropoffCoords = coordsFromAddress(dropoff, PLACEHOLDER_DROPOFF);
+          this.driverService.findNearby(pickupCoords.lat, pickupCoords.lng, 10).pipe(
+            catchError(() => of([] as DriverProfile[]))
+          ).subscribe((drivers) => this.nearbyDrivers.set(drivers));
           return this.tripService
             .estimateFare({
               pickupLat: pickupCoords.lat,

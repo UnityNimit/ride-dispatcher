@@ -1,3 +1,43 @@
+.analytics-card {
+  margin-top: 16px;
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+  }
+}
+
+.analytics-empty {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.active-banner {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(30, 136, 229, 0.08), rgba(67, 160, 71, 0.06));
+}
+
+.active-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0 0 10px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
 .rider-dash {
   display: grid;
   gap: 16px;

@@ -37,6 +37,7 @@ export class IncomingRequestComponent implements OnInit {
   readonly loading = signal(true);
   readonly acceptingId = signal<number | null>(null);
   readonly goingOnline = signal(false);
+  readonly updatingLocation = signal(false);
   readonly driver = signal<DriverProfile | null>(null);
   readonly requests = signal<Trip[]>([]);
   readonly formatTimestamp = formatTripTimestamp;
@@ -75,16 +76,54 @@ export class IncomingRequestComponent implements OnInit {
   }
 
   goOnline(): void {
+    this.setAvailability('AVAILABLE', 'You are now available for trips');
+  }
+
+  goOffline(): void {
+    this.setAvailability('OFFLINE', 'You are now offline');
+  }
+
+  setDemoLocation(): void {
+    this.updateLocation(37.7749, -122.4194, 'Demo location set (San Francisco)');
+  }
+
+  useBrowserLocation(): void {
+    if (!navigator.geolocation) {
+      this.snackBar.open('Geolocation not supported', 'Dismiss', { duration: 3000 });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => this.updateLocation(pos.coords.latitude, pos.coords.longitude, 'Location updated'),
+      () => this.snackBar.open('Could not read GPS location', 'Dismiss', { duration: 3000 })
+    );
+  }
+
+  private setAvailability(status: DriverStatus, message: string): void {
     this.goingOnline.set(true);
-    this.driverService.updateAvailability({ status: 'AVAILABLE' as DriverStatus }).subscribe({
+    this.driverService.updateAvailability({ status }).subscribe({
       next: (profile) => {
         this.driver.set(profile);
         this.goingOnline.set(false);
-        this.snackBar.open('You are now available for trips', 'OK', { duration: 2500 });
+        this.snackBar.open(message, 'OK', { duration: 2500 });
       },
       error: (err) => {
         this.goingOnline.set(false);
-        this.snackBar.open(err?.error?.message || 'Could not go online', 'Dismiss', { duration: 3500 });
+        this.snackBar.open(err?.error?.message || 'Could not update status', 'Dismiss', { duration: 3500 });
+      }
+    });
+  }
+
+  private updateLocation(lat: number, lng: number, message: string): void {
+    this.updatingLocation.set(true);
+    this.driverService.updateLocation({ lat, lng }).subscribe({
+      next: (profile) => {
+        this.driver.set(profile);
+        this.updatingLocation.set(false);
+        this.snackBar.open(message, 'OK', { duration: 2500 });
+      },
+      error: (err) => {
+        this.updatingLocation.set(false);
+        this.snackBar.open(err?.error?.message || 'Could not update location', 'Dismiss', { duration: 3500 });
       }
     });
   }
@@ -101,6 +140,10 @@ export class IncomingRequestComponent implements OnInit {
         this.snackBar.open(err?.error?.message || 'Could not accept trip', 'Dismiss', { duration: 3500 });
       }
     });
+  }
+
+  isOnTrip(): boolean {
+    return this.driver()?.status === 'ON_TRIP';
   }
 
   isAvailable(): boolean {

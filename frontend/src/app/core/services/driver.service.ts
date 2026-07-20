@@ -7,6 +7,7 @@ import {
   DriverAvailabilityRequest,
   DriverLocationUpdateRequest,
   DriverProfile,
+  DriverProfileUpdateRequest,
   DriverStatus
 } from '../models/driver.model';
 
@@ -38,6 +39,10 @@ export class DriverService {
 
   updateLocation(request: DriverLocationUpdateRequest): Observable<DriverProfile> {
     return this.http.patch<DriverProfile>(`${this.baseUrl}/me/location`, request);
+  }
+
+  updateProfile(request: DriverProfileUpdateRequest): Observable<DriverProfile> {
+    return this.http.put<DriverProfile>(`${this.baseUrl}/me/profile`, request);
   }
 
   findNearby(lat: number, lng: number, radiusKm = 5): Observable<DriverProfile[]> {

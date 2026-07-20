@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { DashboardStats } from '../models/dashboard.model';
+import { DashboardStats, DriverTripStats } from '../models/dashboard.model';
 import { Trip } from '../models/trip.model';
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +13,10 @@ export class DashboardService {
 
   getDashboardStats(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.baseUrl}/dashboard-stats`);
+  }
+
+  getTripsPerDriver(): Observable<DriverTripStats[]> {
+    return this.http.get<DriverTripStats[]>(`${this.baseUrl}/analytics/trips-per-driver`);
   }
 
   forceCancelTrip(id: number, reason?: string): Observable<Trip> {

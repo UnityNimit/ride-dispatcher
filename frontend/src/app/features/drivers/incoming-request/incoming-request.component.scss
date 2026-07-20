@@ -65,3 +65,12 @@
   font-weight: 600;
   color: #1e3a5f;
 }
+
+.location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+

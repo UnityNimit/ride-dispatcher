@@ -1,0 +1,70 @@
+<div class="dh-page">
+  <div class="dh-page-header">
+    <h1>Driver settings</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="dh-loading-state">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading profile...</p>
+    </div>
+  } @else if (profile(); as p) {
+    <div class="settings-grid">
+      <mat-card class="settings-card">
+        <h2>Availability</h2>
+        <p>Current status: <strong>{{ p.status }}</strong></p>
+        <p class="hint">You must be AVAILABLE with a location set to see incoming requests. ON_TRIP while driving.</p>
+        <div class="btn-row">
+          <button mat-flat-button color="primary" (click)="setAvailability('AVAILABLE')" [disabled]="saving() || p.status === 'ON_TRIP'">
+            Go online
+          </button>
+          <button mat-stroked-button (click)="setAvailability('OFFLINE')" [disabled]="saving() || p.status === 'ON_TRIP'">
+            Go offline
+          </button>
+        </div>
+      </mat-card>
+
+      <mat-card class="settings-card">
+        <h2>Location</h2>
+        @if (p.currentLat != null && p.currentLng != null) {
+          <p>Lat {{ p.currentLat | number:'1.4-4' }}, Lng {{ p.currentLng | number:'1.4-4' }}</p>
+        } @else {
+          <p class="warn">No location on file. Incoming requests need this.</p>
+        }
+        <div class="btn-row">
+          <button mat-stroked-button (click)="setDemoLocation()" [disabled]="saving()">
+            <mat-icon>place</mat-icon>
+            Set demo location (SF)
+          </button>
+          <button mat-stroked-button (click)="useBrowserLocation()" [disabled]="saving()">
+            <mat-icon>my_location</mat-icon>
+            Use GPS
+          </button>
+        </div>
+      </mat-card>
+
+      <mat-card class="settings-card profile-card">
+        <h2>Vehicle profile</h2>
+        <form [formGroup]="form" (ngSubmit)="saveProfile()">
+          <mat-form-field appearance="outline" class="dh-full-width">
+            <mat-label>Make</mat-label>
+            <input matInput formControlName="vehicleMake" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="dh-full-width">
+            <mat-label>Model</mat-label>
+            <input matInput formControlName="vehicleModel" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="dh-full-width">
+            <mat-label>Color</mat-label>
+            <input matInput formControlName="vehicleColor" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="dh-full-width">
+            <mat-label>License plate</mat-label>
+            <input matInput formControlName="licensePlate" />
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving()">Save profile</button>
+        </form>
+      </mat-card>
+    </div>
+  }
+</div>

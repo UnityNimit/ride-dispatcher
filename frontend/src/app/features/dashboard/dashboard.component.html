@@ -23,8 +23,49 @@
       <app-stat-card label="Registered drivers" [value]="s.totalRegisteredDrivers" icon="groups" iconColor="#8e24aa"></app-stat-card>
       <app-stat-card label="Registered riders" [value]="s.totalRegisteredRiders" icon="person" iconColor="#8e24aa"></app-stat-card>
     </div>
+
+    <mat-card class="analytics-card">
+      <h2>Driver analytics (last 30 days)</h2>
+      @if (driverAnalytics().length === 0) {
+        <p class="analytics-empty">No completed trips in this window yet.</p>
+      } @else {
+        <table mat-table [dataSource]="driverAnalytics()" class="dh-full-width">
+          <ng-container matColumnDef="driverName">
+            <th mat-header-cell *matHeaderCellDef>Driver</th>
+            <td mat-cell *matCellDef="let row">{{ row.driverName }}</td>
+          </ng-container>
+          <ng-container matColumnDef="completedTrips">
+            <th mat-header-cell *matHeaderCellDef>Completed</th>
+            <td mat-cell *matCellDef="let row">{{ row.completedTrips }}</td>
+          </ng-container>
+          <ng-container matColumnDef="totalRevenue">
+            <th mat-header-cell *matHeaderCellDef>Revenue</th>
+            <td mat-cell *matCellDef="let row">${{ row.totalRevenue.toFixed(2) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="averageFare">
+            <th mat-header-cell *matHeaderCellDef>Avg fare</th>
+            <td mat-cell *matCellDef="let row">${{ row.averageFare.toFixed(2) }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="analyticsColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: analyticsColumns;"></tr>
+        </table>
+      }
+    </mat-card>
   } @else if (currentRole() === 'RIDER') {
     <div class="rider-dash">
+      @if (activeRiderTrip(); as active) {
+        <mat-card class="active-banner">
+          <div class="active-banner-content">
+            <div>
+              <h2>Active trip #{{ active.id }}</h2>
+              <p>Track live status on trip detail. Your driver will complete the ride.</p>
+              <app-trip-status-chip [status]="active.status"></app-trip-status-chip>
+            </div>
+            <button mat-flat-button color="primary" (click)="openTrip(active)">Open trip</button>
+          </div>
+        </mat-card>
+      }
+
       <mat-card class="quick-actions">
         <h2>Quick actions</h2>
         <p>Book a ride or open your history. The driver completes the trip after pickup.</p>

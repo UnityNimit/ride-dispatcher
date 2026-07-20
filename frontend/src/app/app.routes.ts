@@ -70,6 +70,14 @@ export const routes: Routes = [
           import('./features/drivers/driver-trips/driver-trips.component').then(
             (m) => m.DriverTripsComponent
           )
+      },
+      {
+        path: 'driver-settings',
+        canActivate: [roleGuard(['DRIVER'])],
+        loadComponent: () =>
+          import('./features/drivers/driver-settings/driver-settings.component').then(
+            (m) => m.DriverSettingsComponent
+          )
       }
     ]
   },

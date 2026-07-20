@@ -51,6 +51,20 @@
         <p class="fare-meta">Enter pickup and dropoff to see an estimate.</p>
       }
       <p class="fare-disclaimer">Final fare may vary based on route, traffic, and wait time.</p>
+
+      <h3 class="nearby-title">Nearby drivers</h3>
+      @if (nearbyDrivers().length === 0) {
+        <p class="fare-meta">No available drivers in range yet.</p>
+      } @else {
+        <ul class="nearby-list">
+          @for (driver of nearbyDrivers(); track driver.id) {
+            <li>
+              <mat-icon>badge</mat-icon>
+              <span>{{ driver.fullName }} — {{ driver.vehicleMake }} {{ driver.vehicleModel }} ({{ driver.rating }}★)</span>
+            </li>
+          }
+        </ul>
+      }
     </mat-card>
   </div>
 </div>
