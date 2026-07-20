@@ -23,6 +23,7 @@ import com.credx.dispatchhub.util.GeoUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class TripService {
     private final UserRepository userRepository;
     private final FareEstimationService fareEstimationService;
     private final TripRequestRateLimiter tripRequestRateLimiter;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public TripResponse requestTrip(Long riderId, TripRequest request) {
@@ -76,11 +78,8 @@ public class TripService {
                 .build());
 
         trip = tripRepository.save(trip);
-        return toResponse(trip);
+        return publishTripUpdate(toResponse(trip));
     }
-
-    @Transactional(readOnly = true)
-    public FareEstimateResponse estimateFare(double pickupLat, double pickupLng, double dropoffLat, double dropoffLng) {
         return fareEstimationService.estimate(pickupLat, pickupLng, dropoffLat, dropoffLng);
     }
 
@@ -181,7 +180,7 @@ public class TripService {
                 .changedAt(Instant.now())
                 .build());
 
-        return toResponse(tripRepository.save(trip));
+        return publishTripUpdate(toResponse(tripRepository.save(trip)));
     }
 
     @Transactional
@@ -199,7 +198,7 @@ public class TripService {
                 .changedAt(Instant.now())
                 .build());
 
-        return toResponse(tripRepository.save(trip));
+        return publishTripUpdate(toResponse(tripRepository.save(trip)));
     }
 
     @Transactional
@@ -217,7 +216,7 @@ public class TripService {
                 .changedAt(Instant.now())
                 .build());
 
-        return toResponse(tripRepository.save(trip));
+        return publishTripUpdate(toResponse(tripRepository.save(trip)));
     }
 
     @Transactional
@@ -245,7 +244,7 @@ public class TripService {
         driver.setTotalTrips(driver.getTotalTrips() + 1);
         driverProfileRepository.save(driver);
 
-        return toResponse(tripRepository.save(trip));
+        return publishTripUpdate(toResponse(tripRepository.save(trip)));
     }
 
     /**
@@ -341,7 +340,7 @@ public class TripService {
             driverProfileRepository.save(driver);
         }
 
-        return toResponse(tripRepository.save(trip));
+        return publishTripUpdate(toResponse(tripRepository.save(trip)));
     }
 
     private Trip getOwnedTripForDriver(Long tripId, Long driverUserId) {
@@ -392,5 +391,14 @@ public class TripService {
                 .distanceKm(trip.getDistanceKm())
                 .statusHistory(history)
                 .build();
+    }
+
+    /**
+     * Push trip state to subscribers of {@code /topic/trips/{id}}.
+     * Call only after mutations — never from read-only list/detail mapping.
+     */
+    private TripResponse publishTripUpdate(TripResponse response) {
+        messagingTemplate.convertAndSend("/topic/trips/" + response.getId(), response);
+        return response;
     }
 }

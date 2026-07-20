@@ -1,9 +1,8 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval, startWith, switchMap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,12 +13,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { TripService } from '../../../core/services/trip.service';
+import { TripRealtimeService } from '../../../core/services/trip-realtime.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Trip } from '../../../core/models/trip.model';
 import { TripStatusChipComponent } from '../../shared/components/trip-status-chip.component';
 import { formatTripTimestamp } from '../../../core/utils/date-format.util';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-trip-detail',
@@ -40,11 +39,12 @@ import { environment } from '../../../../environments/environment';
   templateUrl: './trip-detail.component.html',
   styleUrl: './trip-detail.component.scss'
 })
-export class TripDetailComponent implements OnInit {
+export class TripDetailComponent implements OnInit, OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly tripService = inject(TripService);
+  private readonly tripRealtime = inject(TripRealtimeService);
   private readonly dashboardService = inject(DashboardService);
   private readonly authService = inject(AuthService);
   private readonly snackBar = inject(MatSnackBar);
@@ -71,26 +71,28 @@ export class TripDetailComponent implements OnInit {
       return;
     }
 
-    // TODO: replace this interval-based poll with a real-time push channel
-    // (WebSocket via STOMP, or Server-Sent Events) once the backend exposes
-    // one. Polling is a deliberate placeholder - the signal-based `trip()`
-    // state below is what a future push implementation would update instead.
-    interval(environment.pollingIntervalMs)
-      .pipe(
-        startWith(0),
-        switchMap(() => this.tripService.getTripById(this.tripId)),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe({
-        next: (trip) => {
-          this.trip.set(trip);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.notFound.set(true);
-          this.loading.set(false);
-        }
-      });
+    this.tripService.getTripById(this.tripId).subscribe({
+      next: (trip) => {
+        this.trip.set(trip);
+        this.loading.set(false);
+        this.subscribeToLiveUpdates();
+      },
+      error: () => {
+        this.notFound.set(true);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.tripRealtime.deactivate();
+  }
+
+  private subscribeToLiveUpdates(): void {
+    this.tripRealtime
+      .watchTrip(this.tripId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((trip) => this.trip.set(trip));
   }
 
   goBack(): void {
